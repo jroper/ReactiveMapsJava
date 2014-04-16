@@ -33,6 +33,7 @@ public class Main {
 
         if (Settings.SettingsProvider.get(system).BotsEnabled && Cluster.get(system).getSelfRoles().contains("frontend")) {
             ActorRef regionManagerClient = system.actorOf(RegionManagerClient.props(), "regionManagerClient");
+            ActorRef userMetaData = system.actorOf(UserMetaData.props(), "userMetaData");
 
             int id = 1;
             URL url = Main.class.getClassLoader().getResource("bots/" + id + ".json");
@@ -42,7 +43,7 @@ public class Main {
                 id++;
                 url = Main.class.getClassLoader().getResource("bots/" + id + ".json");
             }
-            system.actorOf(BotManager.props(regionManagerClient, urls));
+            system.actorOf(BotManager.props(regionManagerClient, userMetaData, urls));
         }
     }
 }

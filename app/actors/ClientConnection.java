@@ -2,6 +2,7 @@ package actors;
 
 import akka.actor.*;
 import actors.PositionSubscriberProtocol.PositionSubscriberUpdate;
+import backend.UserMetaDataProtocol;
 import com.fasterxml.jackson.databind.JsonNode;
 import models.backend.*;
 import actors.ClientConnectionProtocol.*;
@@ -22,19 +23,21 @@ public class ClientConnection extends UntypedActor {
      * @param upstream            The upstream actor to send to
      * @param regionManagerClient The region manager client to send updates to
      */
-    public static Props props(String email, ActorRef upstream, ActorRef regionManagerClient) {
-        return Props.create(ClientConnection.class, () -> new ClientConnection(email, upstream, regionManagerClient));
+    public static Props props(String email, ActorRef upstream, ActorRef regionManagerClient, ActorRef userMetaData) {
+        return Props.create(ClientConnection.class, () -> new ClientConnection(email, upstream, regionManagerClient, userMetaData));
     }
 
     private final String email;
     private final ActorRef upstream;
     private final ActorRef regionManagerClient;
     private final ActorRef subscriber;
+    private final ActorRef userMetaData;
 
-    private ClientConnection(String email, ActorRef upstream, ActorRef regionManagerClient) {
+    private ClientConnection(String email, ActorRef upstream, ActorRef regionManagerClient, ActorRef userMetaData) {
         this.email = email;
         this.upstream = upstream;
         this.regionManagerClient = regionManagerClient;
+        this.userMetaData = userMetaData;
 
         this.subscriber = getContext().actorOf(PositionSubscriber.props(self()), "positionSubscriber");
     }
@@ -45,8 +48,10 @@ public class ClientConnection extends UntypedActor {
 
             if (event instanceof UserMoved) {
                 UserMoved userMoved = (UserMoved) event;
+                LatLng position = LatLng.fromLngLatAlt(userMoved.getPosition().getCoordinates());
                 regionManagerClient.tell(new PointOfInterest.UserPosition(email, System.currentTimeMillis(),
-                        LatLng.fromLngLatAlt(userMoved.getPosition().getCoordinates())), self());
+                        position), self());
+                userMetaData.tell(new UserMetaDataProtocol.UpdateUserPosition(email, position), self());
             } else if (event instanceof ViewingArea) {
                 ViewingArea viewingArea = (ViewingArea) event;
                 subscriber.tell(BoundingBox.fromBbox(viewingArea.getArea().getBbox()), self());

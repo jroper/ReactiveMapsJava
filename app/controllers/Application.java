@@ -18,6 +18,7 @@ public class Application extends Controller {
    * The WebSocket
    */
   public static WebSocket<JsonNode> stream(String email) {
-      return WebSocket.withActor(upstream -> ClientConnection.props(email, upstream, Actors.regionManagerClient()));
+      return WebSocket.withActor(upstream -> ClientConnection.props(email, upstream, Actors.regionManagerClient(),
+              Actors.userMetaData()));
   }
 }

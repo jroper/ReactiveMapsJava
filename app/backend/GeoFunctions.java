@@ -236,4 +236,21 @@ public class GeoFunctions {
         }
     }
 
+    public double distanceBetweenPoints(LatLng pointA, LatLng pointB) {
+        // Setup the inputs to the formula
+        double R = 6371009d; // average radius of the earth in metres
+        double dLat = Math.toRadians(pointB.getLat() - pointA.getLat());
+        double dLng = Math.toRadians(pointB.getLng() - pointA.getLng());
+        double latA = Math.toRadians(pointA.getLat());
+        double latB = Math.toRadians(pointB.getLat());
+
+        // The actual haversine formula. a and c are well known value names in the formula.
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.sin(dLng / 2) * Math.sin(dLng / 2) *
+                        Math.cos(latA) * Math.cos(latB);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c;
+
+        return distance;
+    }
 }

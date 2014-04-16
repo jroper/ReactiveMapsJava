@@ -22,15 +22,17 @@ import java.util.concurrent.TimeUnit;
  * Loads and starts GeoJSON bots
  */
 public class BotManager extends UntypedActor {
-    public static Props props(ActorRef regionManagerClient, List<URL> data) {
-        return Props.create(BotManager.class, () -> new BotManager(regionManagerClient, data));
+    public static Props props(ActorRef regionManagerClient, ActorRef userMetaData, List<URL> data) {
+        return Props.create(BotManager.class, () -> new BotManager(regionManagerClient, userMetaData, data));
     }
 
     private final ActorRef regionManagerClient;
+    private final ActorRef userMetaData;
     private final List<URL> data;
 
-    public BotManager(ActorRef regionManagerClient, List<URL> data) {
+    public BotManager(ActorRef regionManagerClient, ActorRef userMetaData, List<URL> data) {
         this.regionManagerClient = regionManagerClient;
+        this.userMetaData = userMetaData;
         this.data = data;
     }
 
@@ -72,11 +74,11 @@ public class BotManager extends UntypedActor {
                         String userId = "bot-" + total + "-" + port + "-" + ThreadLocalRandom.current().nextInt(1000) + "-" + i + "-" +
                                 Optional.ofNullable(feature.getId()).orElse(Integer.toString(i)) + "-" + name;
                         if (originalTrail) {
-                            getContext().actorOf(GeoJsonBot.props(route, 0, 0, userId, regionManagerClient));
+                            getContext().actorOf(GeoJsonBot.props(route, 0, 0, userId, regionManagerClient, userMetaData));
                         } else {
                             getContext().actorOf(GeoJsonBot.props(route,
                                     ThreadLocalRandom.current().nextDouble() * 15.0,
-                                    ThreadLocalRandom.current().nextDouble() * -30.0, userId, regionManagerClient));
+                                    ThreadLocalRandom.current().nextDouble() * -30.0, userId, regionManagerClient, userMetaData));
                         }
                     } else {
                         throw new RuntimeException("Got unknown geometry: " + feature.getGeometry());

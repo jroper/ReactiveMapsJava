@@ -10,6 +10,7 @@ require.config {
     gps: "./services/gps"
     mockGps: "./services/mockGps"
     storage: "./services/storage"
+    userInfo: "./services/userInfo"
     md5: "./md5.min"
     bootstrap: "../lib/bootstrap/js/bootstrap"
     jquery: "../lib/jquery/jquery"

@@ -7,6 +7,7 @@ GET        /                    controllers.Application.index
 
 # The websocket
 GET        /stream/:email       controllers.Application.stream(email)
+GET        /user/:email         controllers.UserController.get(email)
 
 # Static assets
 GET        /assets/*file        controllers.Assets.at(path="/public", file)

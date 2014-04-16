@@ -1,6 +1,7 @@
 package actors;
 
 import akka.actor.*;
+import backend.UserMetaDataProtocol;
 import models.backend.*;
 import models.backend.PointOfInterest.UserPosition;
 import org.geojson.LineString;
@@ -15,8 +16,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class GeoJsonBot extends UntypedActor {
 
-    public static Props props(LineString trail, double offsetLat, double offsetLng, String userId, ActorRef regionManagerClient) {
-        return Props.create(GeoJsonBot.class, () -> new GeoJsonBot(trail, offsetLat, offsetLng, userId, regionManagerClient));
+    public static Props props(LineString trail, double offsetLat, double offsetLng, String userId,
+                              ActorRef regionManagerClient, ActorRef userMetaData) {
+        return Props.create(GeoJsonBot.class, () -> new GeoJsonBot(trail, offsetLat, offsetLng, userId,
+                regionManagerClient, userMetaData));
     }
 
     private static final Object STEP = new Object();
@@ -27,13 +30,16 @@ public class GeoJsonBot extends UntypedActor {
     private final String userId;
     private final ActorRef regionManagerClient;
     private final ActorRef positionSubscriber;
+    private final ActorRef userMetaData;
 
-    public GeoJsonBot(LineString trail, double offsetLat, double offsetLng, String userId, ActorRef regionManagerClient) {
+    public GeoJsonBot(LineString trail, double offsetLat, double offsetLng, String userId, ActorRef regionManagerClient,
+                      ActorRef userMetaData) {
         this.trail = trail;
         this.offsetLat = offsetLat;
         this.offsetLng = offsetLng;
         this.userId = userId;
         this.regionManagerClient = regionManagerClient;
+        this.userMetaData = userMetaData;
 
         this.positionSubscriber = getContext().actorOf(PositionSubscriber.props(self()), "positionSubscriber");
     }
@@ -58,9 +64,10 @@ public class GeoJsonBot extends UntypedActor {
             pos += direction;
 
             LngLatAlt c = trail.getCoordinates().get(pos);
-            UserPosition userPos = new UserPosition(userId, System.currentTimeMillis(),
-                    new LatLng(c.getLatitude() + offsetLat, c.getLongitude() + offsetLng));
+            LatLng position = new LatLng(c.getLatitude() + offsetLat, c.getLongitude() + offsetLng);
+            UserPosition userPos = new UserPosition(userId, System.currentTimeMillis(), position);
             regionManagerClient.tell(userPos, self());
+            userMetaData.tell(new UserMetaDataProtocol.UpdateUserPosition(userId, position), self());
 
             stepCount++;
             if (stepCount % 30 == 0) {

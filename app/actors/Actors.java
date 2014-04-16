@@ -28,9 +28,14 @@ public class Actors extends Plugin {
         return actors().regionManagerClient;
     }
 
+    public static ActorRef userMetaData() {
+        return actors().userMetaData;
+    }
+
     private final Application app;
 
     private ActorRef regionManagerClient;
+    private ActorRef userMetaData;
 
     public Actors(Application app) {
         this.app = app;
@@ -40,6 +45,7 @@ public class Actors extends Plugin {
         ActorSystem system = Akka.system();
 
         regionManagerClient = system.actorOf(RegionManagerClient.props(), "regionManagerClient");
+        userMetaData = system.actorOf(UserMetaData.props(), "userMetaData");
 
         if (Cluster.get(system).getSelfRoles().stream().anyMatch(r -> r.startsWith("backend"))) {
             system.actorOf(RegionManager.props(), "regionManager");
@@ -54,7 +60,7 @@ public class Actors extends Plugin {
                 id++;
                 url = app.resource("bots/" + id + ".json");
             }
-            system.actorOf(BotManager.props(regionManagerClient, urls));
+            system.actorOf(BotManager.props(regionManagerClient, userMetaData, urls));
         }
     }
 }
